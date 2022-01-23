@@ -12,7 +12,7 @@ redis_client = redis.Redis(
     port = settings.REDIS_PORT,
     db = settings.REDIS_DB
 )
-
+#
 kafka_producer = kafka.KafkaProducer(
     value_serializer = serializers.serialize_json,
     bootstrap_servers = settings.KAFKA_SERVERS
