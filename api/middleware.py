@@ -4,6 +4,7 @@ import settings
 import serializers
 from uuid import uuid4
 from retry import retry
+from external import redis_client, kafka_producer
 
 
 def _send_message(text_data):
@@ -16,8 +17,14 @@ def _send_message(text_data):
     #       string.
     # Luego utilice kafka_producer para encolar la tarea.
     #################################################################
-    from external import redis_client, kafka_producer
-    job_id = str(uuid4())
+    job_id = str(uuid4()) #id
+    #paquete:
+    job_data = {
+        "id": job_id,
+        "text": text_data
+    }
+    #emision por cola de kafka
+    kafka_producer.send(settings.KAFKA_TOPIC, job_data)
     #################################################################
     return job_id
 
@@ -32,11 +39,21 @@ def _receive_response(job_id):
     #     3. Si obtuvimos respuesta, extraiga la predicción y el
     #        score para ser devueltos como salida de esta función.
     #     4. Eliminar los resultados de la BD temporal.
+
+    #Aqui intenta 5 veces y deja 1 segundo entre si, para buscar y esperar el resultado
+    #del modelo de machine learning.
     #################################################################
-    from external import redis_client, kafka_producer
-    prediction, score = None, None
+    response = redis_client.get(job_id) 
+
+    if response is None:
+        raise ValueError
+
+    response = serializers.deserialize_json(response)
+    prediction = response['prediction']
+    score = response['score']
+
+    redis_client.delete(job_id)
     #################################################################
-    return prediction, score
 
 
 def model_predict(text_data):

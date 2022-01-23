@@ -34,7 +34,13 @@ def index():
         # Luego con los resultados obtenidos, complete el diccionario
         # "context" para mostrar la predicción en el frontend.
         #################################################################
-        pass
+        prediction, score = model_predict(text_data)
+        context = {
+            "text": text_data,
+            "prediction": prediction,
+            "score": score,
+            "success": True
+        }
         #################################################################
 
     return render_template('index.html', context=context)
@@ -77,8 +83,8 @@ def predict():
         # de la misma. Complete los campos de "rpse" con los valores
         # obtenidos.
         #################################################################
-        text_data = None
-        prediction, score = None, None
+        text_data = request.args.get('text')
+        prediction, score = model_predict(text_data)
         #################################################################
         rpse = {
             "text": text_data,
